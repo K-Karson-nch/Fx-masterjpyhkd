@@ -1,0 +1,16 @@
+{
+  "name": "mastercard-fx",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static JPY/HKD converter using the latest Mastercard rate and a card fee estimate",
+  "type": "commonjs",
+  "scripts": {
+    "update-rates": "node scripts/fetch-rates.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.16.0"
+  }
+}
