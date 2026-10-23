@@ -137,6 +137,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
 .fee-presets button:hover{border-color:var(--ink);color:var(--ink)}
 .fee-presets button.active{background:var(--ink);border-color:var(--ink);color:#fff}
 .card-actions{display:flex;gap:10px;margin-top:22px}
+.fetch-note{margin:10px 2px 0;font-size:10.5px;line-height:1.55;color:var(--soft)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:999px;padding:12px 18px;font-size:12.5px;font-weight:700;text-decoration:none;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;white-space:nowrap}
 .btn svg{width:16px;height:16px;flex:0 0 auto}
 .btn-primary{background:var(--ink);color:#fff;flex:1}
@@ -165,6 +166,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
 .rate-details div{display:flex;justify-content:space-between;gap:16px;font-size:10.5px}
 .rate-details span{color:#a9a49b}
 .rate-details strong{font-weight:600;text-align:right}
+.rate-details strong.warn{color:var(--yellow)}
 .summary-note{position:relative;z-index:1;color:#a9a49b;font-size:10.5px;line-height:1.6;margin:18px 0}
 .text-link{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;color:#fff;font-size:11.5px;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:3px}
 .text-link:hover{border-color:#fff}
@@ -372,15 +374,16 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
           </div>
 
           <div class="card-actions">
-            <button class="btn btn-secondary" id="refreshBtn" type="button">
+            <button class="btn btn-secondary" id="refreshBtn" type="button" aria-describedby="fetchNote">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 4v7h-7"/></svg>
-              Refresh rate
+              <span id="refreshLabel">Fetch latest rate</span>
             </button>
             <button class="btn btn-primary" id="copyBtn" type="button">
               Copy result
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>
             </button>
           </div>
+          <p class="fetch-note" id="fetchNote">Checks for a newer published rate file on open and every 15 minutes. GitHub checks Mastercard every 3 hours.</p>
         </div>
 
         <aside class="summary-card" aria-label="Conversion summary">
@@ -397,6 +400,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
           <div class="rate-details">
             <div><span>Rate date</span><strong id="rateDate">22 Oct 2026</strong></div>
             <div><span>Snapshot updated</span><strong id="updatedAt">—</strong></div>
+            <div><span>Page checked</span><strong id="checkedAt">—</strong></div>
             <div><span>Reverse Mastercard rate</span><strong id="reverseRate">1 HKD = 20.1825 JPY</strong></div>
           </div>
           <p class="summary-note" id="summaryNote">Mastercard publishes each direction separately. This tool uses the exact rate for the direction shown.</p>
@@ -444,7 +448,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
       <div>
         <p class="eyebrow">Rate data</p>
         <h2>Straight from Mastercard's public converter.</h2>
-        <p>A scheduled GitHub Action refreshes the small rate file used by this page. The site itself is static HTML, so it loads quickly anywhere without a server or tracker.</p>
+        <p>A GitHub Action checks Mastercard every 3 hours and updates the small rate file this page reads. The page checks for a newer file when it opens and every 15 minutes. The site itself is static HTML, so it loads quickly without a server or tracker.</p>
         <a class="btn btn-dark" href="https://www.mastercard.com/global/en/personal/get-support/currency-exchange-rate-converter.html" target="_blank" rel="noopener">
           Open Mastercard converter
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
@@ -500,6 +504,8 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
     fee: 3,
     rates: cloneRates(EMBEDDED.rates),
     updatedAt: EMBEDDED.updatedAt,
+    checkedAt: null,
+    checkFailed: false,
     mode: "embed",
     loading: false,
     requestId: 0
@@ -529,6 +535,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
     fee: document.getElementById("fee"),
     feePresets: document.getElementById("feePresets"),
     refreshBtn: document.getElementById("refreshBtn"),
+    refreshLabel: document.getElementById("refreshLabel"),
     copyBtn: document.getElementById("copyBtn"),
     sourceBadge: document.getElementById("sourceBadge"),
     sourceText: document.getElementById("sourceText"),
@@ -539,6 +546,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
     sumTotal: document.getElementById("sumTotal"),
     rateDate: document.getElementById("rateDate"),
     updatedAt: document.getElementById("updatedAt"),
+    checkedAt: document.getElementById("checkedAt"),
     reverseRate: document.getElementById("reverseRate"),
     summaryNote: document.getElementById("summaryNote"),
     dataJpyHkd: document.getElementById("dataJpyHkd"),
@@ -806,6 +814,16 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
     el.sumTotal.textContent = c ? money(c.total, to) : "—";
     el.rateDate.textContent = c && c.date ? fmtDate(c.date) : "—";
     el.updatedAt.textContent = state.updatedAt ? fmtTimestamp(state.updatedAt) : "—";
+    el.checkedAt.className = state.checkFailed ? "warn" : "";
+    if (state.checkFailed) {
+      el.checkedAt.textContent = "Check failed";
+    } else if (state.checkedAt) {
+      el.checkedAt.textContent = fmtTimestamp(state.checkedAt);
+    } else if (state.mode === "file") {
+      el.checkedAt.textContent = "Not checked";
+    } else {
+      el.checkedAt.textContent = "Checking…";
+    }
 
     var reverse = pairRate(to, from);
     el.reverseRate.textContent = reverse ? "1 " + to + " = " + rateFormatter.format(reverse.rate) + " " + from : "—";
@@ -849,6 +867,7 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
     state.loading = true;
     el.refreshBtn.disabled = true;
     el.refreshBtn.classList.add("spinning");
+    if (force) el.refreshLabel.textContent = "Checking…";
     try {
       var response = await fetchJson("rates.json?ts=" + Date.now(), 8000);
       if (!response.ok) throw new Error("HTTP " + response.status);
@@ -858,19 +877,23 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
       var previous = state.updatedAt;
       state.rates = cloneRates(data.rates);
       state.updatedAt = data.updatedAt || new Date().toISOString();
+      state.checkedAt = new Date().toISOString();
+      state.checkFailed = false;
       state.mode = "remote";
       render();
-      if (force) toast(previous === state.updatedAt ? "No newer rate published yet" : "Rate data refreshed");
+      if (force) toast(previous === state.updatedAt ? "Already up to date — checked just now." : "Updated to the latest published rate.");
     } catch (error) {
       if (id !== state.requestId) return;
+      state.checkFailed = true;
       state.mode = location.protocol === "file:" ? "file" : "error";
       render();
-      if (force) toast("Could not refresh rate data");
+      if (force) toast("Could not check for a newer rate. Try again.");
     } finally {
       if (id === state.requestId) {
         state.loading = false;
         el.refreshBtn.disabled = false;
         el.refreshBtn.classList.remove("spinning");
+        el.refreshLabel.textContent = "Fetch latest rate";
       }
     }
   }
@@ -971,7 +994,13 @@ h2{font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.045em;font-w
     });
 
     el.swapBtn.addEventListener("click", swap);
-    el.refreshBtn.addEventListener("click", function () { loadRates(true); });
+    el.refreshBtn.addEventListener("click", function () {
+      if (location.protocol === "file:") {
+        toast("Publish the site to check for rate updates.");
+        return;
+      }
+      loadRates(true);
+    });
     el.copyBtn.addEventListener("click", copyResult);
   }
 
