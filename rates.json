@@ -1,15 +1,15 @@
 {
-  "updatedAt": "2026-11-13T19:44:48.320Z",
+  "updatedAt": "2026-11-14T10:29:37.161Z",
   "source": "mastercard",
   "page": "https://www.mastercard.com/global/en/personal/get-support/currency-exchange-rate-converter.html",
   "rates": {
     "JPY_HKD": {
-      "rate": 0.0492005,
-      "date": "2026-11-12"
+      "rate": 0.0491703,
+      "date": "2026-11-13"
     },
     "HKD_JPY": {
-      "rate": 20.4046,
-      "date": "2026-11-12"
+      "rate": 20.4227,
+      "date": "2026-11-13"
     }
   }
 }
